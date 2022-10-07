@@ -1,6 +1,8 @@
 const HapiBoom = require('@hapi/boom');
 const faker = require('faker')
 
+
+
 class ProductService {
   constructor() {
     this.products = []

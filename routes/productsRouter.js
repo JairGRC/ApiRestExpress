@@ -1,6 +1,9 @@
 const express = require('express');
 const ProductService = require('./../services/productService')
 
+const validatorHandler = require ('./../middlewares/validator.handler')
+
+const {createProductDTO,updateProductDTO,getProductDTO} = require ('./../schemas/productDTO')
 const router = express.Router();
 
 const service = new ProductService()
@@ -17,7 +20,9 @@ router.get('/filter', (req, res) => {
   res.send('Yo soy un filtro');
 })
 
-router.get('/:id',async (req, res,next) => {
+router.get('/:id',
+validatorHandler(getProductDTO,'params'),
+async (req, res,next) => {
   try {
     const { id } = req.params;
 
@@ -27,14 +32,13 @@ router.get('/:id',async (req, res,next) => {
   } catch (error) {
     next(error)
   }
-
-
-
 });
 
 
 
-router.post('/', async (req, res) => {
+router.post('/',
+validatorHandler(createProductDTO,'body'),
+async (req, res) => {
   const body = req.body
   const newProduct = await service.create(body);
   res.json(
@@ -42,7 +46,10 @@ router.post('/', async (req, res) => {
   )
 })
 
-router.patch('/:id', async (req, res,next) => {
+router.patch('/:id',
+validatorHandler(getProductDTO,'params'),
+validatorHandler(updateProductDTO,'body'),
+async (req, res,next) => {
   try {
     const { id } = req.params;
     const body = req.body
