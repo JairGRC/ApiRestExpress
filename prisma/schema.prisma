@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model prueba {
+  prueba  Int
+  Pruyeba Int
+
+  @@ignore
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique @db.VarChar(255)
+  password  String    @db.VarChar(100)
+  role      String    @default("customer") @db.VarChar(50)
+  Customer  Customer?
+  create_at DateTime  @default(now())
+
+}
+
+model Customer {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(255)
+  lastName  String   @db.VarChar(100)
+  phone     String   @db.VarChar(50)
+  userId    Int      @unique
+  User      User     @relation(fields: [userId], references: [id])
+  Orden     Orden[]
+  create_at DateTime @default(now())
+
+}
+
+model Product {
+  id          Int             @id @default(autoincrement())
+  name        String          @db.VarChar(255)
+  description String          @db.VarChar(255)
+  image       String          @db.VarChar(255)
+  price       Decimal         @db.Decimal()
+  categoryId  Int
+  Category    Category        @relation(fields: [categoryId], references: [id])
+  Orden       Orden_Product[]
+  create_at   DateTime        @default(now())
+
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(255)
+  image     String    @db.VarChar(255)
+  Product   Product[]
+  create_at DateTime  @default(now())
+
+}
+
+model Orden {
+  id         Int             @id @default(autoincrement())
+  customerId Int
+  Customer   Customer        @relation(fields: [customerId], references: [id])
+  products   Orden_Product[]
+  create_at  DateTime        @default(now())
+}
+
+model Orden_Product {
+
+  orderId   Int
+  Orden     Orden    @relation(fields: [orderId], references: [id])
+  productId Int
+  Product   Product  @relation(fields: [productId], references: [id])
+  amount    Decimal   @db.Decimal()
+  create_at DateTime @default(now())
+  @@id([orderId, productId])
+}

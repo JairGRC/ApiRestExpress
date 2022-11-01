@@ -1,71 +1,78 @@
 const HapiBoom = require('@hapi/boom');
-const faker = require('faker')
+const { PrismaClient } = require('@prisma/client');
+const { number } = require('joi');
+
+const prisma = new PrismaClient()
 
 
 
 class ProductService {
   constructor() {
-    this.products = []
-    this.genereate()
   }
-
-  genereate() {
-    const limit = 100;
-    for (let index = 0; index < limit; index++) {
-      this.products.push({
-        id: faker.datatype.uuid(),
-        name: faker.commerce.productName(),
-        price: parseInt(faker.commerce.price(), 10),
-        image: faker.image.imageUrl(),
-        isBlock: faker.datatype.boolean()
-      });
-
+  async find(params) {
+    const {limit, ofsset} = params
+    if(limit && ofsset){
+      const option = {
+        skip: Number(ofsset),
+        take :Number(limit)
+      }
+      const product = await prisma.product.findMany(option)
+      return product
+    }else{
+      const product = await prisma.product.findMany()
+      return product
     }
-  }
-  async create(data) {
-    const newProduct = {
-      id: faker.datatype.uuid(),
-      ...data
-    }
-    this.products.push(newProduct)
-    return newProduct
-  }
-  async find() {
-    return new Promise((resolve,reject)=>{
-      setTimeout(()=>{
-          resolve(this.products)
-      },5000)
-    })
-
   }
   async findOne(id) {
-    const product = this.products.find(item => item.id === id);
-    if(!product){
+    const product = await prisma.product.findUnique({
+      where: {
+        id: Number(id)
+      }
+    })
+    if (!product) {
       throw HapiBoom.notFound('Product not found')
-    }
-    if(product.isBlock){
-      throw HapiBoom.conflict('Product is bloock')
     }
     return product
   }
+  async create(data) {
+    const categorie = await prisma.category.findUnique({
+      where:{
+        id:data.categoryId
+      }
+    })
+    if(!categorie){
+      throw HapiBoom.conflict('idCategoria  no existe ')
+    }
+    const product = prisma.product.create({data:data})
+    if(!product){
+      throw HapiBoom.conflict('Product no creado ')
+    }
+    return product
+
+  }
   async update(id, changes) {
-    const index = this.products.findIndex(item => item.id === id)
-    if (index === -1) {
+    const product  = await this.findOne(id)
+    if (!product) {
       throw HapiBoom.notFound('Product not found')
     }
-    const product = this.products[index]
-    this.products[index] = {
-      ...product,
-      ...changes
-    }
-    return this.products[index]
+    const updateProduct = await prisma.product.update({
+      where: {
+        id: Number(id),
+      },
+      data: changes
+    })
+    return updateProduct
   }
   async delete(id) {
-    const index = this.products.findIndex(item => item.id === id)
-    if (index === -1) {
+    const product = await this.findOne(id)
+    if (!product) {
       throw HapiBoom.notFound('Product not found')
     }
-    this.products.splice(index, 1)
+    const productDelete = await prisma.delete({
+      where: {
+        id: Number(id)
+      }
+    })
     return { id };
   }
 }
